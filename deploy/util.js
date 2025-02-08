@@ -1,8 +1,8 @@
 const { ethers, upgrades } = require('hardhat');
 const hre = require('hardhat');
 const { getImplementationAddress } = require('@openzeppelin/upgrades-core');
-const sampleModule = require('@openzeppelin/hardhat-upgrades/dist/utils/deploy-impl');
-const { getContract } = require('./script-utils');
+
+const { fromE18 } = require('../scripts/assets');
 
 async function getContract(name, network) {
 
@@ -39,22 +39,6 @@ async function initWallet() {
     console.log('[User] Balance wallet: ' + fromE18(balance.toString()));
 
     return wallet;
-}
-
-function toE18(value) {
-    return new BigNumber(value.toString()).times(new BigNumber(10).pow(18)).toFixed(0);
-}
-
-function fromE18(value) {
-    return Number.parseFloat(new BigNumber(value.toString()).div(new BigNumber(10).pow(18)).toFixed(3).toString());
-}
-
-function toE6(value) {
-    return new BigNumber(value.toString()).times(new BigNumber(10).pow(6)).toFixed(0);
-}
-
-function fromE6(value) {
-    return value / 10 ** 6;
 }
 
 
@@ -143,5 +127,5 @@ async function deployProxy(contractName, factoryName, deployments, save, params)
 
 module.exports = {
     deployProxy: deployProxy,
-    deployProxyMulti: deployProxyMulti,
+    initWallet: initWallet,
 };
