@@ -1,13 +1,24 @@
 const { initWallet } = require('../deploy/util');
 const hre = require("hardhat");
+const BigNumber = require('bignumber.js');
 let ethers = require('hardhat').ethers;
 
-let ARBITRUM = {
+
+const ARBITRUM = {
     usdc: "0xaf88d065e77c8cC2239327C5EDb3A432268e5831",
     weth: "0x82aF49447D8a07e3bd95BD0d56f35241523fBab1",
+
+
+    aavePoolProvider: "0xa97684ead0e402dC232d5A977953DF7ECBaB3CDb",
+    aWeth: "0xe50fA9b3c56FfB159cB0FCA61F5c9D750e8128c8",
+    aUsdc: "0x724dc807b04555b71ed48a6896b6F41593b8C637",
+
+    compound: "0x9c4ec768c28520B50860ea7a15bd7213a9fF58bf",
+
+    npmUniswap: "0xC36442b4a4522E871399CD717aBDD847Ab11FE88",
 }
 
-let BASE = {
+const BASE = {
     usdc: '0x833589fCD6eDb6E08f4c7C32D4f71b54bdA02913',
     weth: "0x4200000000000000000000000000000000000006",
 }
@@ -124,6 +135,36 @@ async function getERC20ByAddress(address, wallet) {
 
 }
 
+async function getPrice() {
+    let params = { gasPrice: "1000000000", gasLimit: "30000000" };
+    if (process.env.ETH_NETWORK === 'POLYGON') {
+        params = { gasPrice: "60000000000", gasLimit: 15000000 };
+    } else if (process.env.ETH_NETWORK === 'ARBITRUM') {
+        params = { gasLimit: 25000000, gasPrice: "100000000" }; // gasPrice always 0.1 GWEI
+    } else if (process.env.ETH_NETWORK === 'BSC') {
+        params = { gasPrice: "3000000000", gasLimit: 15000000 }; // gasPrice always 3 GWEI
+    } else if (process.env.ETH_NETWORK === "OPTIMISM") {
+        params = { gasPrice: "1000000000", gasLimit: 10000000 }; // gasPrice always 0.001 GWEI
+    } else if (process.env.ETH_NETWORK === 'BLAST') {
+        params = { gasPrice: "10000000", gasLimit: "25000000" }; // todo
+    } else if (process.env.ETH_NETWORK === 'ZKSYNC') {
+        let { maxFeePerGas, maxPriorityFeePerGas } = await ethers.provider.getFeeData();
+        return { maxFeePerGas, maxPriorityFeePerGas, gasLimit: 30000000 }
+    } else if (process.env.ETH_NETWORK === 'BASE') {
+        let gasPrice = await ethers.provider.getGasPrice();
+        let percentage = gasPrice.mul(BigNumber.from('50')).div(100);
+        gasPrice = gasPrice.add(percentage);
+        return { gasPrice: gasPrice * 2, gasLimit: 30000000 }
+    } else if (process.env.ETH_NETWORK === 'LINEA') {
+        let gasPrice = await ethers.provider.getGasPrice();
+        let percentage = gasPrice.mul(BigNumber.from('5')).div(100);
+        gasPrice = gasPrice.add(percentage);
+        return { gasPrice: gasPrice, gasLimit: 20000000 }
+    }
+
+    return params;
+}
+
 module.exports = {
     fromE18,
     fromE6,
@@ -132,4 +173,6 @@ module.exports = {
     transferAsset,
     transferETH,
     getERC20ByAddress,
+    ARBITRUM,
+    BASE
 }

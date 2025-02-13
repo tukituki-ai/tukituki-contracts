@@ -3,6 +3,8 @@
  * and adopter to js.
  * License: GPL-3.0
  */
+
+const BigNumber = require('bignumber.js');
 const SNAPSHOTS = [];
 
 async function takeSnapshot(provider) {
@@ -70,9 +72,31 @@ function wrapWithTitle(title, str) {
     return title === undefined ? str : `${title} at step "${str}"`;
 }
 
+function toPrintableObject(obj) {
+    if (obj == null) {
+      return null;
+    }
+    if (obj instanceof BigNumber || typeof obj === 'bigint') {
+      return obj.toString();
+    }
+    if (Array.isArray(obj)) {
+      return obj.map(toPrintableObject);
+    }
+    if (typeof obj === 'object') {
+      return Object.fromEntries(
+        Object.entries(obj).map(([key, value]) => [
+          key,
+          toPrintableObject(value),
+        ]),
+      );
+    }
+    return obj;
+  }
+
 
 
 
 module.exports = {
     sharedBeforeEach,
+    toPrintableObject,
 }

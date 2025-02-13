@@ -4,6 +4,8 @@ const { getImplementationAddress } = require('@openzeppelin/upgrades-core');
 
 const { fromE18 } = require('../scripts/assets');
 
+let wallet = undefined;
+
 async function getContract(name, network) {
 
     if (!network) network = process.env.STAND;
@@ -24,14 +26,14 @@ async function getContract(name, network) {
 
 async function initWallet() {
 
-    updateFeeData(hre);
+    // updateFeeData(hre);
 
     if (wallet) {
         return wallet;
     }
 
     let provider = ethers.provider;    
-    networkName = process.env.NETWORK;
+    networkName = process.env.ETH_NETWORK;
     wallet = new ethers.Wallet(process.env['PK'], provider);
     
     console.log('[User] Wallet: ' + wallet.address);
@@ -47,7 +49,6 @@ async function deployProxy(contractName, factoryName, deployments, save, params)
     let factoryOptions;
     let unsafeAllow;
     let args;
-    console.log("deploy", contractName, factoryName, deployments, save, params);
     
     if (params) {
         factoryOptions = params.factoryOptions;
@@ -55,12 +56,8 @@ async function deployProxy(contractName, factoryName, deployments, save, params)
         args = params.args;
     }
 
-    console.log("factory name", factoryName);
     const contractFactory = await ethers.getContractFactory(factoryName, factoryOptions);
-    console.log("factory got", contractFactory.address);
 
-    console.log("args", args);
-    
 
     // uncomment for force import
     // let proxyAddress = '';
@@ -113,20 +110,20 @@ async function deployProxy(contractName, factoryName, deployments, save, params)
 
     // Enable verification contract after deploy
     
-    console.log(`Verify proxy [${proxy.address}] ....`);
-    try {
-        await hre.run('verify:verify', {
-            address: proxy.address,
-            constructorArguments: args,
-        });
-    } catch (e) {
-        console.log(e);
-    }
-    console.log(`Verify impl [${implAddress}] ....`);
-    await hre.run('verify:verify', {
-        address: implAddress,
-        constructorArguments: [],
-    });
+    // console.log(`Verify proxy [${proxy.address}] ....`);
+    // try {
+    //     await hre.run('verify:verify', {
+    //         address: proxy.address,
+    //         constructorArguments: args,
+    //     });
+    // } catch (e) {
+    //     console.log(e);
+    // }
+    // console.log(`Verify impl [${implAddress}] ....`);
+    // await hre.run('verify:verify', {
+    //     address: implAddress,
+    //     constructorArguments: [],
+    // });
     
 
     return proxyDeployments;
