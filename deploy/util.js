@@ -47,13 +47,20 @@ async function deployProxy(contractName, factoryName, deployments, save, params)
     let factoryOptions;
     let unsafeAllow;
     let args;
+    console.log("deploy", contractName, factoryName, deployments, save, params);
+    
     if (params) {
         factoryOptions = params.factoryOptions;
         unsafeAllow = params.unsafeAllow;
         args = params.args;
     }
 
+    console.log("factory name", factoryName);
     const contractFactory = await ethers.getContractFactory(factoryName, factoryOptions);
+    console.log("factory got", contractFactory.address);
+
+    console.log("args", args);
+    
 
     // uncomment for force import
     // let proxyAddress = '';
@@ -70,7 +77,7 @@ async function deployProxy(contractName, factoryName, deployments, save, params)
         console.log(`Proxy ${contractName} not found`);
         proxy = await upgrades.deployProxy(contractFactory, args, {
             kind: 'uups',
-            unsafeAllow: unsafeAllow,
+            unsafeAllow: true,
         });
         console.log(`Deploy ${contractName} Proxy progress -> ` + proxy.address + ' tx: ' + proxy.deployTransaction.hash);
         await proxy.deployTransaction.wait();
