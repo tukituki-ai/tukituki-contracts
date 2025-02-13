@@ -1,5 +1,6 @@
 require('hardhat-deploy');
 require("@nomiclabs/hardhat-waffle");
+require('@openzeppelin/hardhat-upgrades');
 const dotenv = require('dotenv/config');
 
 const BASE_NODE_URI="https://rpc.ankr.com/base";

@@ -77,7 +77,7 @@ async function deployProxy(contractName, factoryName, deployments, save, params)
         console.log(`Proxy ${contractName} not found`);
         proxy = await upgrades.deployProxy(contractFactory, args, {
             kind: 'uups',
-            unsafeAllow: true,
+            unsafeAllow: unsafeAllow,
         });
         console.log(`Deploy ${contractName} Proxy progress -> ` + proxy.address + ' tx: ' + proxy.deployTransaction.hash);
         await proxy.deployTransaction.wait();
