@@ -27,6 +27,10 @@ const initializeTokens = async (address, account, agent) => {
 describe("Agent: Test", function () {
     let agent;
     let account;
+    let weth;
+    let usdc;
+    let wbtc;
+    let usdt;
 
     sharedBeforeEach("Deploy and Setup", async () => {
         await hre.run("compile");
@@ -39,10 +43,10 @@ describe("Agent: Test", function () {
         agent = await ethers.getContract('Agent');
         console.log("agent", agent.address);
 
-        let weth = await initializeTokens(ARBITRUM.weth, account, agent);
-        let usdc = await initializeTokens(ARBITRUM.usdc, account, agent);
-        let wbtc = await initializeTokens(ARBITRUM.wbtc, account, agent);
-        let usdt = await initializeTokens(ARBITRUM.usdt, account, agent);
+        weth = await initializeTokens(ARBITRUM.weth, account, agent);
+        usdc = await initializeTokens(ARBITRUM.usdc, account, agent);
+        wbtc = await initializeTokens(ARBITRUM.wbtc, account, agent);
+        usdt = await initializeTokens(ARBITRUM.usdt, account, agent);
 
         console.log(weth.address, usdc.address);
         console.log("weth balance", (await weth.balanceOf(account.address) / 1e18).toString());
@@ -88,12 +92,24 @@ describe("Agent: Test", function () {
 
 
     it("should deposit and withdraw from Uniswap", async () => {
-        const tokenId = (await agent.depositUniswap(toE18(100), toE6(100), ARBITRUM.weth, ARBITRUM.usdc, 100)).toString();
-        
+        console.log("depositing");
+        console.log("weth balance", (await weth.balanceOf(account.address) / 1e18).toString());
+        console.log("usdc balance", (await usdc.balanceOf(account.address) / 1e6).toString());
+        await agent.depositUniswap(toE18(100), toE6(100), ARBITRUM.weth, ARBITRUM.usdc, 100);
+        console.log("weth balance", (await weth.balanceOf(account.address) / 1e18).toString());
+        console.log("usdc balance", (await usdc.balanceOf(account.address) / 1e6).toString());
+        console.log("weth agent balance", (await weth.balanceOf(agent.address) / 1e18).toString());
+        console.log("usdc agent balance", (await usdc.balanceOf(agent.address) / 1e6).toString());
 
-        let tokenIds = await agent.userTokenIds(account.address);
-        console.log("tokenIds", tokenIds);
-        // await agent.withdrawUniswap(tokenId);
+
+        let balances = await agent.balance(account.address);
+        console.log("tokenIds", balances.tokenIds[0].toString());   
+        let tokenId = balances.tokenIds[0];
+        await agent.withdrawUniswap(tokenId);
+        console.log("weth balance", (await weth.balanceOf(account.address) / 1e18).toString());
+        console.log("usdc balance", (await usdc.balanceOf(account.address) / 1e6).toString());
+        console.log("weth agent balance", (await weth.balanceOf(agent.address) / 1e18).toString());
+        console.log("usdc agent balance", (await usdc.balanceOf(agent.address) / 1e6).toString());
     });
 
 

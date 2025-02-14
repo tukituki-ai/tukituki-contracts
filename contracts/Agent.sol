@@ -71,6 +71,7 @@ contract Agent is AccessControlUpgradeable, UUPSUpgradeable, IERC721Receiver {
         uint256 aaveUsdc;
         uint256 aaveWbtc;
         uint256 aaveUsdt;
+        uint256[] tokenIds;
     }
 
     function setArgs(Args memory args) public {
@@ -138,6 +139,10 @@ contract Agent is AccessControlUpgradeable, UUPSUpgradeable, IERC721Receiver {
 
         tokenIdToUser[tokenId] = msg.sender;
         userTokenIds[msg.sender].push(tokenId);
+
+
+        IERC20(token1).transfer(msg.sender, IERC20(token1).balanceOf(address(this)));
+        IERC20(token2).transfer(msg.sender, IERC20(token2).balanceOf(address(this)));
     }
 
 
@@ -211,7 +216,8 @@ contract Agent is AccessControlUpgradeable, UUPSUpgradeable, IERC721Receiver {
             aaveWeth: userAaveBalances[user][address(weth)],
             aaveUsdc: userAaveBalances[user][address(usdc)],
             aaveWbtc: userAaveBalances[user][address(wbtc)],
-            aaveUsdt: userAaveBalances[user][address(usdt)]
+            aaveUsdt: userAaveBalances[user][address(usdt)],
+            tokenIds: userTokenIds[user]
         });
     }   
 
