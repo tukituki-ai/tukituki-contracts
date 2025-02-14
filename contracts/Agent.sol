@@ -9,22 +9,28 @@ import "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 import "@openzeppelin/contracts/token/ERC721/IERC721Receiver.sol";
 
 import {IPoolAddressesProvider, IPool} from "./interfaces/Aave.sol";
-import {ICompound} from "./interfaces/Compound.sol";
 import {INonfungiblePositionManager, TickMath, LiquidityAmounts, IUniswapV3Factory, IUniswapV3Pool} from "./interfaces/Uniswap.sol";
 
 import "hardhat/console.sol";
 
 contract Agent is AccessControlUpgradeable, UUPSUpgradeable, IERC721Receiver {
     IPoolAddressesProvider public aavePoolProvider;
-    ICompound public compound;
     
     INonfungiblePositionManager public npmUniswap;
 
     IERC20 public usdc;
     IERC20 public weth;
     IERC20 public wbtc;
+    IERC20 public usdt;
+
     mapping(address => address) public aToken;
     mapping(uint256 => address) public tokenIdToPool;
+
+    mapping(address => mapping(address => uint256)) public userAaveBalances;
+    mapping(uint256 => address) public tokenIdToUser;
+    mapping(address => uint256[]) public userTokenIds;
+    
+
 
     // ---  constructor
 
@@ -46,7 +52,6 @@ contract Agent is AccessControlUpgradeable, UUPSUpgradeable, IERC721Receiver {
 
     struct Args {
         address aavePoolProvider;
-        address compound;
         address npmUniswap;
         
         address usdcToken;
@@ -54,23 +59,24 @@ contract Agent is AccessControlUpgradeable, UUPSUpgradeable, IERC721Receiver {
         address wethToken;
         address aWethToken;
 
+        address usdtToken;
+        address aUsdtToken;
+
         address wbtcToken;
         address aWbtcToken;
-        
     }
 
     struct Balances {
         uint256 aaveWeth;
         uint256 aaveUsdc;
         uint256 aaveWbtc;
-        uint256 compoundUsdc;
-        
+        uint256 aaveUsdt;
     }
 
     function setArgs(Args memory args) public {
         aavePoolProvider = IPoolAddressesProvider(args.aavePoolProvider);
-        compound = ICompound(args.compound);
         npmUniswap = INonfungiblePositionManager(args.npmUniswap);
+
         usdc = IERC20(args.usdcToken);
         aToken[args.usdcToken] = args.aUsdcToken;
         
@@ -79,13 +85,19 @@ contract Agent is AccessControlUpgradeable, UUPSUpgradeable, IERC721Receiver {
 
         wbtc = IERC20(args.wbtcToken);
         aToken[args.wbtcToken] = args.aWbtcToken;
+
+        usdt = IERC20(args.usdtToken);
+        aToken[args.usdtToken] = args.aUsdtToken;
     }
 
     function supplyAave(uint256 amount, address token) public {
+        IERC20(token).transferFrom(msg.sender, address(this), amount);
         IPool pool = IPool(aavePoolProvider.getPool());
 
         IERC20(token).approve(address(pool), amount);
         pool.supply(token, amount, address(this), 0);
+
+        userAaveBalances[msg.sender][token] += amount;
     }
 
     function withdrawAave(uint256 amount, address token) public {
@@ -93,19 +105,16 @@ contract Agent is AccessControlUpgradeable, UUPSUpgradeable, IERC721Receiver {
 
         IERC20(aToken[token]).approve(address(pool), amount);
         pool.withdraw(token, amount, address(this));
+
+        IERC20(token).transfer(msg.sender, amount);
+
+        userAaveBalances[msg.sender][token] -= amount;
     }
 
-    function supplyCompound(uint256 amount, address token) public {
-        IERC20(token).approve(address(compound), amount);
-        compound.supply(token, amount);
-    }
+    function depositUniswap(uint256 amount1, uint256 amount2, address token1, address token2, uint24 fee) public returns (uint256 tokenId) {
+        IERC20(token1).transferFrom(msg.sender, address(this), amount1);
+        IERC20(token2).transferFrom(msg.sender, address(this), amount2);
 
-    // expected usual token
-    function withdrawCompound(uint256 amount, address token) public {
-        compound.withdraw(token, amount);
-    }
-
-    function depositUniswap(uint256 amount1, uint256 amount2, address token1, address token2, uint24 fee) public returns (uint256) {
         IERC20(token1).approve(address(npmUniswap), amount1);
         IERC20(token2).approve(address(npmUniswap), amount2);
 
@@ -124,13 +133,42 @@ contract Agent is AccessControlUpgradeable, UUPSUpgradeable, IERC721Receiver {
                 deadline: block.timestamp
             });
 
-        (uint256 tokenId,,,) = npmUniswap.mint(params);
+        (tokenId,,,) = npmUniswap.mint(params);
         tokenIdToPool[tokenId] = IUniswapV3Factory(npmUniswap.factory()).getPool(token1, token2, fee);
-        return tokenId;
+
+        tokenIdToUser[tokenId] = msg.sender;
+        userTokenIds[msg.sender].push(tokenId);
     }
 
+
     function withdrawUniswap(uint256 tokenId) public {
-        npmUniswap.burn(tokenId);
+        require(tokenIdToUser[tokenId] == msg.sender, "You are not the owner of this token");
+
+        uint128 liquidity = getLiquidity(tokenId);
+
+        (uint256 amount0, uint256 amount1) = getAmounts(tokenId);
+        
+        INonfungiblePositionManager.DecreaseLiquidityParams memory params = INonfungiblePositionManager.DecreaseLiquidityParams({
+            tokenId : tokenId,
+            liquidity : liquidity,
+            amount0Min : 0,
+            amount1Min : 0,
+            deadline : block.timestamp
+        });
+
+        npmUniswap.decreaseLiquidity(params);
+
+        INonfungiblePositionManager.CollectParams memory collectParams = INonfungiblePositionManager.CollectParams({
+            tokenId: tokenId,
+            recipient: address(this),
+            amount0Max: type(uint128).max,
+            amount1Max: type(uint128).max
+        });
+        npmUniswap.collect(collectParams);
+
+        address pool = tokenIdToPool[tokenId];
+        IERC20(IUniswapV3Pool(pool).token0()).transfer(msg.sender, amount0);
+        IERC20(IUniswapV3Pool(pool).token1()).transfer(msg.sender, amount1);
     }
 
     function getAmounts(uint256 tokenId) public view returns (uint256 availableAmount, uint256 neededAmount) {
@@ -147,7 +185,7 @@ contract Agent is AccessControlUpgradeable, UUPSUpgradeable, IERC721Receiver {
                 uint160 sqrtRatioAX96 = TickMath.getSqrtRatioAtTick(tickLower);
                 uint160 sqrtRatioBX96 = TickMath.getSqrtRatioAtTick(tickUpper);                
                 (uint256 balance0, uint256 balance1) = LiquidityAmounts.getAmountsForLiquidity(sqrtRatioX96, sqrtRatioAX96, sqrtRatioBX96, liquidity);
-                (baseBalance, sideBalance) = (balance1, balance0);
+                (baseBalance, sideBalance) = (balance0, balance1);
             }
         }
     }
@@ -168,15 +206,14 @@ contract Agent is AccessControlUpgradeable, UUPSUpgradeable, IERC721Receiver {
         }
     }
 
-    function balances() public view returns (Balances memory) {
+    function balance(address user) public view returns (Balances memory) {
         return Balances({
-            aaveWeth: IERC20(aToken[address(weth)]).balanceOf(address(this)),
-            aaveUsdc: IERC20(aToken[address(usdc)]).balanceOf(address(this)),
-            aaveWbtc: IERC20(aToken[address(wbtc)]).balanceOf(address(this)),
-            compoundUsdc: IERC20(address(compound)).balanceOf(address(this))
-            
+            aaveWeth: userAaveBalances[user][address(weth)],
+            aaveUsdc: userAaveBalances[user][address(usdc)],
+            aaveWbtc: userAaveBalances[user][address(wbtc)],
+            aaveUsdt: userAaveBalances[user][address(usdt)]
         });
-    }
+    }   
 
 
     function onERC721Received(address, address, uint256, bytes memory) external override returns (bytes4) {

@@ -18,8 +18,10 @@ const expectApproximately = (actual, expected, percent) => {
 };
 
 const initializeTokens = async (address, account, agent) => {
-    await transferAsset(address, agent.address);
-    return await getERC20ByAddress(address, account);
+    await transferAsset(address, account.address);
+    let token = await getERC20ByAddress(address, account);
+    await token.approve(agent.address, ethers.constants.MaxUint256);
+    return token;
 };
 
 describe("Agent: Test", function () {
@@ -40,48 +42,57 @@ describe("Agent: Test", function () {
         let weth = await initializeTokens(ARBITRUM.weth, account, agent);
         let usdc = await initializeTokens(ARBITRUM.usdc, account, agent);
         let wbtc = await initializeTokens(ARBITRUM.wbtc, account, agent);
-        
+        let usdt = await initializeTokens(ARBITRUM.usdt, account, agent);
+
         console.log(weth.address, usdc.address);
         console.log("weth balance", (await weth.balanceOf(account.address) / 1e18).toString());
         console.log("usdc balance", (await usdc.balanceOf(account.address) / 1e6).toString());
 
         await agent.setArgs({
             aavePoolProvider: ARBITRUM.aavePoolProvider,
-            compound: ARBITRUM.compound,
+
+            usdtToken: ARBITRUM.usdt,
+            aUsdtToken: ARBITRUM.aUsdt,
             usdcToken: ARBITRUM.usdc,
             aUsdcToken: ARBITRUM.aUsdc,
             wethToken: ARBITRUM.weth,
             aWethToken: ARBITRUM.aWeth,
             wbtcToken: ARBITRUM.wbtc,
             aWbtcToken: ARBITRUM.aWbtc,
+
             npmUniswap: ARBITRUM.npmUniswap,
         });
-
-        
     });
 
     it("should supply and withdraw from Aave", async () => {
         await agent.supplyAave(toE18(100), ARBITRUM.weth);
-        await agent.withdrawAave(toE18(100), ARBITRUM.weth);
+        
 
         await agent.supplyAave(toE6(100), ARBITRUM.usdc);
 
         await agent.supplyAave(toE8(50), ARBITRUM.wbtc);
+        await agent.supplyAave(toE6(50), ARBITRUM.usdt);
+
+        let balances = await agent.balance(account.address);
+        
+        console.log(balances[0].toString());
+        console.log(balances[1].toString());
+        console.log(balances[2].toString());
+        console.log(balances[3].toString());
+
         await agent.withdrawAave(toE8(50), ARBITRUM.wbtc);
 
         await agent.withdrawAave(toE6(100), ARBITRUM.usdc);
+        await agent.withdrawAave(toE18(100), ARBITRUM.weth);
     });
 
-    it("should supply and withdraw from Compound", async () => {
-        await agent.supplyCompound(toE6(100), ARBITRUM.usdc);
-        let balances = await agent.balances();
-        let compound_balance = Number(balances[3]);
-        
-        await agent.withdrawCompound((compound_balance / 1e6).toFixed(0), ARBITRUM.usdc);
-    });
 
     it("should deposit and withdraw from Uniswap", async () => {
-        const tokenId = await agent.depositUniswap(toE18(100), toE6(100), ARBITRUM.weth, ARBITRUM.usdc, 100);
+        const tokenId = (await agent.depositUniswap(toE18(100), toE6(100), ARBITRUM.weth, ARBITRUM.usdc, 100)).toString();
+        
+
+        let tokenIds = await agent.userTokenIds(account.address);
+        console.log("tokenIds", tokenIds);
         await agent.withdrawUniswap(tokenId);
     });
 
