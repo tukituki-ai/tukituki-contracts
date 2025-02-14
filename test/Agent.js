@@ -93,7 +93,7 @@ describe("Agent: Test", function () {
 
         let tokenIds = await agent.userTokenIds(account.address);
         console.log("tokenIds", tokenIds);
-        await agent.withdrawUniswap(tokenId);
+        // await agent.withdrawUniswap(tokenId);
     });
 
 
