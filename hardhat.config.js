@@ -8,7 +8,7 @@ const OP_NODE_URI="https://rpc.ankr.com/optimism";
 const ARB_NODE_URI="https://rpc.ankr.com/arbitrum";
 const LINEA_NODE_URI="https://1rpc.io/linea";
 
-const BLOCK_NUMBER = 275188482;
+const BLOCK_NUMBER = 306068879;
 
 module.exports = {
   namedAccounts: {

@@ -7,11 +7,13 @@ let ethers = require('hardhat').ethers;
 const ARBITRUM = {
     usdc: "0xaf88d065e77c8cC2239327C5EDb3A432268e5831",
     weth: "0x82aF49447D8a07e3bd95BD0d56f35241523fBab1",
+    wbtc: "0x2f2a2543B76A4166549F7aaB2e75Bef0aefC5B0f",
 
 
     aavePoolProvider: "0xa97684ead0e402dC232d5A977953DF7ECBaB3CDb",
     aWeth: "0xe50fA9b3c56FfB159cB0FCA61F5c9D750e8128c8",
     aUsdc: "0x724dc807b04555b71ed48a6896b6F41593b8C637",
+    aWbtc: "0x078f358208685046a11c85e8ad32895ded33a249",
 
     compound: "0x9c4ec768c28520B50860ea7a15bd7213a9fF58bf",
 
@@ -21,6 +23,25 @@ const ARBITRUM = {
 const BASE = {
     usdc: '0x833589fCD6eDb6E08f4c7C32D4f71b54bdA02913',
     weth: "0x4200000000000000000000000000000000000006",
+
+    aavePoolProvider: "0xe20fCBdBfFC4Dd138cE8b2E6FBb6CB49777ad64D",
+    aWeth: "0xD4a0e0b9149BCee3C920d2E00b5dE09138fd8bb7",
+    aUsdc: "0x4e65fE4DbA92790696d040ac24Aa414708F5c0AB"
+}
+
+const OPTIMISM = {
+    weth: "0x4200000000000000000000000000000000000006",
+    usdc: "0x0b2C639c533813f4Aa9D7837CAf62653d097Ff85",
+
+    aavePoolProvider: "0xa97684ead0e402dC232d5A977953DF7ECBaB3CDb",
+
+}
+
+const AVALANCHE = {
+    weth: "0x4200000000000000000000000000000000000006",
+    usdc: "0x9702230A8Ea53601f5cD2dc00fDBc13d4dF903d9",
+
+    aavePoolProvider: "0xa97684ead0e402dC232d5A977953DF7ECBaB3CDb",
 }
 
 async function transferAsset(assetAddress, to, amount) {
@@ -34,6 +55,9 @@ async function transferAsset(assetAddress, to, amount) {
                     break;
                 case ARBITRUM.usdc:
                     from = '0xe68ee8a12c611fd043fb05d65e1548dc1383f2b9';
+                    break;
+                case ARBITRUM.wbtc:
+                    from = '0x2DF3ace03098deef627B2E78546668Dd9B8EB8bC';
                     break;
                 default:
                     throw new Error('Unknown asset address');
@@ -115,6 +139,10 @@ function toE6(value) {
     return new BigNumber(value.toString()).times(new BigNumber(10).pow(6)).toFixed(0);
 }
 
+function toE8(value) {
+    return new BigNumber(value.toString()).times(new BigNumber(10).pow(8)).toFixed(0);
+}
+
 function fromE6(value) {
     return value / 10 ** 6;
 }
@@ -170,6 +198,7 @@ module.exports = {
     fromE6,
     toE18,
     toE6,
+    toE8,
     transferAsset,
     transferETH,
     getERC20ByAddress,

@@ -3,7 +3,7 @@ const { deployments, ethers } = require('hardhat');
 const { expect } = require("chai");
 const chai = require("chai");
 const { sharedBeforeEach, toPrintableObject } = require("./util");
-const { ARBITRUM, BASE, transferAsset, getERC20ByAddress, toE18, toE6 } = require("../scripts/assets");
+const { ARBITRUM, BASE, transferAsset, getERC20ByAddress, toE18, toE6, toE8 } = require("../scripts/assets");
 
 
 chai.use(require('chai-bignumber')());
@@ -39,7 +39,8 @@ describe("Agent: Test", function () {
 
         let weth = await initializeTokens(ARBITRUM.weth, account, agent);
         let usdc = await initializeTokens(ARBITRUM.usdc, account, agent);
-
+        let wbtc = await initializeTokens(ARBITRUM.wbtc, account, agent);
+        
         console.log(weth.address, usdc.address);
         console.log("weth balance", (await weth.balanceOf(account.address) / 1e18).toString());
         console.log("usdc balance", (await usdc.balanceOf(account.address) / 1e6).toString());
@@ -51,6 +52,8 @@ describe("Agent: Test", function () {
             aUsdcToken: ARBITRUM.aUsdc,
             wethToken: ARBITRUM.weth,
             aWethToken: ARBITRUM.aWeth,
+            wbtcToken: ARBITRUM.wbtc,
+            aWbtcToken: ARBITRUM.aWbtc,
             npmUniswap: ARBITRUM.npmUniswap,
         });
 
@@ -63,20 +66,23 @@ describe("Agent: Test", function () {
 
         await agent.supplyAave(toE6(100), ARBITRUM.usdc);
 
+        await agent.supplyAave(toE8(50), ARBITRUM.wbtc);
+        await agent.withdrawAave(toE8(50), ARBITRUM.wbtc);
+
         await agent.withdrawAave(toE6(100), ARBITRUM.usdc);
     });
 
     it("should supply and withdraw from Compound", async () => {
         await agent.supplyCompound(toE6(100), ARBITRUM.usdc);
         let balances = await agent.balances();
-        let compound_balance = Number(balances[2]);
+        let compound_balance = Number(balances[3]);
         
         await agent.withdrawCompound((compound_balance / 1e6).toFixed(0), ARBITRUM.usdc);
     });
 
     it("should deposit and withdraw from Uniswap", async () => {
-        await agent.depositUniswap(toE18(100), toE18(100), ARBITRUM.weth, ARBITRUM.usdc, 500);
-        await agent.withdrawUniswap(toE18(100), ARBITRUM.weth, ARBITRUM.usdc);
+        const tokenId = await agent.depositUniswap(toE18(100), toE6(100), ARBITRUM.weth, ARBITRUM.usdc, 100);
+        await agent.withdrawUniswap(tokenId);
     });
 
 

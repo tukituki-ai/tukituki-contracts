@@ -1,6 +1,8 @@
 const { ethers, upgrades } = require('hardhat');
 const hre = require('hardhat');
 const { getImplementationAddress } = require('@openzeppelin/upgrades-core');
+const path = require('path'),
+    fs = require('fs');
 
 const { fromE18 } = require('../scripts/assets');
 
@@ -22,6 +24,32 @@ async function getContract(name, network) {
         console.error(`Error: Could not find a contract named [${name}] in network: [${network}]`);
         throw new Error(e);
     }
+}
+
+function fromDir(startPath, filter) {
+
+
+    if (!fs.existsSync(startPath)) {
+        console.log("no dir ", startPath);
+        return;
+    }
+
+    let files = fs.readdirSync(startPath);
+    for (let i = 0; i < files.length; i++) {
+        let filename = path.join(startPath, files[i]);
+        let stat = fs.lstatSync(filename);
+        if (stat.isDirectory()) {
+            let value = fromDir(filename, filter); //recurse
+            if (value)
+                return value;
+
+        } else if (filename.endsWith(filter)) {
+            // console.log('Fond: ' + filename)
+            return filename;
+        }
+    }
+
+
 }
 
 async function initWallet() {
@@ -132,4 +160,5 @@ async function deployProxy(contractName, factoryName, deployments, save, params)
 module.exports = {
     deployProxy: deployProxy,
     initWallet: initWallet,
+    getContract: getContract,
 };

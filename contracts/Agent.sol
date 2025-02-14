@@ -22,7 +22,7 @@ contract Agent is AccessControlUpgradeable, UUPSUpgradeable, IERC721Receiver {
 
     IERC20 public usdc;
     IERC20 public weth;
-
+    IERC20 public wbtc;
     mapping(address => address) public aToken;
     mapping(uint256 => address) public tokenIdToPool;
 
@@ -53,12 +53,16 @@ contract Agent is AccessControlUpgradeable, UUPSUpgradeable, IERC721Receiver {
         address aUsdcToken;
         address wethToken;
         address aWethToken;
+
+        address wbtcToken;
+        address aWbtcToken;
         
     }
 
     struct Balances {
         uint256 aaveWeth;
         uint256 aaveUsdc;
+        uint256 aaveWbtc;
         uint256 compoundUsdc;
         
     }
@@ -72,6 +76,9 @@ contract Agent is AccessControlUpgradeable, UUPSUpgradeable, IERC721Receiver {
         
         weth = IERC20(args.wethToken);
         aToken[args.wethToken] = args.aWethToken;
+
+        wbtc = IERC20(args.wbtcToken);
+        aToken[args.wbtcToken] = args.aWbtcToken;
     }
 
     function supplyAave(uint256 amount, address token) public {
@@ -122,6 +129,10 @@ contract Agent is AccessControlUpgradeable, UUPSUpgradeable, IERC721Receiver {
         return tokenId;
     }
 
+    function withdrawUniswap(uint256 tokenId) public {
+        npmUniswap.burn(tokenId);
+    }
+
     function getAmounts(uint256 tokenId) public view returns (uint256 availableAmount, uint256 neededAmount) {
         (uint256 baseBalance, uint256 sideBalance) = getAmountsByToken(tokenId);
         return (baseBalance, sideBalance);
@@ -149,7 +160,7 @@ contract Agent is AccessControlUpgradeable, UUPSUpgradeable, IERC721Receiver {
 
     function getCurrentSqrtRatio(uint256 tokenId) public view returns (uint160 sqrtRatioX96) {
         (sqrtRatioX96,,,,,,) = IUniswapV3Pool(tokenIdToPool[tokenId]).slot0();
-    }   
+    }
 
     function getPositionTicks(uint256 tokenId) public view returns (int24 tickLower, int24 tickUpper) {
         if (tokenId > 0) {
@@ -161,6 +172,7 @@ contract Agent is AccessControlUpgradeable, UUPSUpgradeable, IERC721Receiver {
         return Balances({
             aaveWeth: IERC20(aToken[address(weth)]).balanceOf(address(this)),
             aaveUsdc: IERC20(aToken[address(usdc)]).balanceOf(address(this)),
+            aaveWbtc: IERC20(aToken[address(wbtc)]).balanceOf(address(this)),
             compoundUsdc: IERC20(address(compound)).balanceOf(address(this))
             
         });
