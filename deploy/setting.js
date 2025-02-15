@@ -13,12 +13,17 @@ module.exports = async ({getNamedAccounts, deployments}) => {
     
     await agent.setArgs({
         aavePoolProvider: ARBITRUM.aavePoolProvider,
-        compound: ARBITRUM.compound,
-        usdcToken: ARBITRUM.usdc,
-        aUsdcToken: ARBITRUM.aUsdc,
-        wethToken: ARBITRUM.weth,
-        aWethToken: ARBITRUM.aWeth,
-        npmUniswap: ARBITRUM.npmUniswap,
+
+            usdtToken: ARBITRUM.usdt,
+            aUsdtToken: ARBITRUM.aUsdt,
+            usdcToken: ARBITRUM.usdc,
+            aUsdcToken: ARBITRUM.aUsdc,
+            wethToken: ARBITRUM.weth,
+            aWethToken: ARBITRUM.aWeth,
+            wbtcToken: ARBITRUM.wbtc,
+            aWbtcToken: ARBITRUM.aWbtc,
+
+            npmUniswap: ARBITRUM.npmUniswap,
     });
     
 
