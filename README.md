@@ -40,7 +40,7 @@ Ensure you have the following installed:
 
    ```bash
    git clone git@github.com:tukituki-ai/tukituki-contracts.git
-   cd agent-smart-contract
+   cd tukituki-contracts
    ```
 
 2. **Install Dependencies**
