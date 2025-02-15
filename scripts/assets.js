@@ -46,8 +46,8 @@ const OPTIMISM = {
 
     aavePoolProvider: "0xa97684ead0e402dC232d5A977953DF7ECBaB3CDb",
 
-    awbtc: "0x078f358208685046a11c85e8ad32895ded33a249",
-    aweth: "0xe50fa9b3c56ffb159cb0fca61f5c9d750e8128c8",
+    aWbtc: "0x078f358208685046a11c85e8ad32895ded33a249",
+    aWeth: "0xe50fa9b3c56ffb159cb0fca61f5c9d750e8128c8",
     aUsdc: "0x625e7708f30ca75bfd92586e17077590c60eb4cd",
     aUsdt: "0x6ab707aca953edaefbc4fd23ba73294241490620",
     aWsteth: "0xc45a479877e1e9dfe9fcd4056c699575a1045daa",

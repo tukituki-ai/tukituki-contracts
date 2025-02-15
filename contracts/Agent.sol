@@ -23,6 +23,8 @@ contract Agent is AccessControlUpgradeable, UUPSUpgradeable, IERC721Receiver {
     IERC20 public wbtc;
     IERC20 public usdt;
 
+    bytes32 public constant MULTISIG_ROLE = keccak256("MULTISIG_ROLE");
+
     mapping(address => address) public aToken;
     mapping(uint256 => address) public tokenIdToPool;
 
@@ -50,6 +52,10 @@ contract Agent is AccessControlUpgradeable, UUPSUpgradeable, IERC721Receiver {
     override
     {}
 
+    function grantMultisig(address multisig) public onlyRole(DEFAULT_ADMIN_ROLE) {
+        _grantRole(MULTISIG_ROLE, multisig);
+    }
+
     struct Args {
         address aavePoolProvider;
         address npmUniswap;
@@ -74,7 +80,7 @@ contract Agent is AccessControlUpgradeable, UUPSUpgradeable, IERC721Receiver {
         uint256[] tokenIds;
     }
 
-    function setArgs(Args memory args) public {
+    function setArgs(Args memory args) public onlyRole(DEFAULT_ADMIN_ROLE) {
         aavePoolProvider = IPoolAddressesProvider(args.aavePoolProvider);
         npmUniswap = INonfungiblePositionManager(args.npmUniswap);
 
@@ -91,7 +97,7 @@ contract Agent is AccessControlUpgradeable, UUPSUpgradeable, IERC721Receiver {
         aToken[args.usdtToken] = args.aUsdtToken;
     }
 
-    function supplyAave(uint256 amount, address token) public {
+    function supplyAave(uint256 amount, address token) public onlyRole(MULTISIG_ROLE) {
         IERC20(token).transferFrom(msg.sender, address(this), amount);
         IPool pool = IPool(aavePoolProvider.getPool());
 
@@ -101,7 +107,7 @@ contract Agent is AccessControlUpgradeable, UUPSUpgradeable, IERC721Receiver {
         userAaveBalances[msg.sender][token] += amount;
     }
 
-    function withdrawAave(uint256 amount, address token) public {
+    function withdrawAave(uint256 amount, address token) public onlyRole(MULTISIG_ROLE) {
         IPool pool = IPool(aavePoolProvider.getPool());
 
         IERC20(aToken[token]).approve(address(pool), amount);
@@ -112,7 +118,7 @@ contract Agent is AccessControlUpgradeable, UUPSUpgradeable, IERC721Receiver {
         userAaveBalances[msg.sender][token] -= amount;
     }
 
-    function depositUniswap(uint256 amount1, uint256 amount2, address token1, address token2, uint24 fee) public returns (uint256 tokenId) {
+    function depositUniswap(uint256 amount1, uint256 amount2, address token1, address token2, uint24 fee) public onlyRole(MULTISIG_ROLE) returns (uint256 tokenId) {
         IERC20(token1).transferFrom(msg.sender, address(this), amount1);
         IERC20(token2).transferFrom(msg.sender, address(this), amount2);
 
@@ -146,7 +152,7 @@ contract Agent is AccessControlUpgradeable, UUPSUpgradeable, IERC721Receiver {
     }
 
 
-    function withdrawUniswap(uint256 tokenId) public {
+    function withdrawUniswap(uint256 tokenId) public onlyRole(MULTISIG_ROLE) {
         require(tokenIdToUser[tokenId] == msg.sender, "You are not the owner of this token");
 
         uint128 liquidity = getLiquidity(tokenId);

@@ -10,7 +10,7 @@ let wallet = undefined;
 
 async function getContract(name, network) {
 
-    if (!network) network = process.env.STAND;
+    if (!network) network = (process.env.ETH_NETWORK).toLowerCase();
 
     let ethers = hre.ethers;
     let wallet = await initWallet();

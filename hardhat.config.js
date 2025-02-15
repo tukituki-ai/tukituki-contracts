@@ -56,12 +56,25 @@ module.exports = {
       accounts: [process.env.PK],
       gasPrice: "auto"
     },
+    optimism: {
+      url: OP_NODE_URI,
+      chainId: 10,
+      accounts: [process.env.PK],
+      gasPrice: "auto"
+    },
+    avalanche: {
+      url: "https://avalanche.drpc.org",
+      chainId: 43114,
+      accounts: [process.env.PK],
+      gasPrice: "auto"
+    },
   },
   etherscan: {
     apiKey: {
         mainnet: "YOUR_ETHERSCAN_API_KEY",
-        optimisticEthereum: "YOUR_OPTIMISTIC_ETHERSCAN_API_KEY",
-        arbitrum: "HD7VAN3NK41AWIHC834F9H8TJN6638RUYT",
+        optimisticEthereum: "QF8C271KDRUFUUZGXZKUF1U5AMBPAIFR6J",
+        arbitrumOne: "HD7VAN3NK41AWIHC834F9H8TJN6638RUYT",
+        // avalanche: "YOUR_AVALANCHE_API_KEY",
     }
   },
   mocha: {
