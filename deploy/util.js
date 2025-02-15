@@ -138,20 +138,20 @@ async function deployProxy(contractName, factoryName, deployments, save, params)
 
     // Enable verification contract after deploy
     
-    // console.log(`Verify proxy [${proxy.address}] ....`);
-    // try {
-    //     await hre.run('verify:verify', {
-    //         address: proxy.address,
-    //         constructorArguments: args,
-    //     });
-    // } catch (e) {
-    //     console.log(e);
-    // }
-    // console.log(`Verify impl [${implAddress}] ....`);
-    // await hre.run('verify:verify', {
-    //     address: implAddress,
-    //     constructorArguments: [],
-    // });
+    console.log(`Verify proxy [${proxy.address}] ....`);
+    try {
+        await hre.run('verify:verify', {
+            address: proxy.address,
+            constructorArguments: args,
+        });
+    } catch (e) {
+        console.log(e);
+    }
+    console.log(`Verify impl [${implAddress}] ....`);
+    await hre.run('verify:verify', {
+        address: implAddress,
+        constructorArguments: [],
+    });
     
 
     return proxyDeployments;
