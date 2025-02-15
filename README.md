@@ -39,7 +39,7 @@ Ensure you have the following installed:
 1. **Clone the Repository**
 
    ```bash
-   git clone https://github.com/your-username/agent-smart-contract.git
+   git clone git@github.com:tukituki-ai/tukituki-contracts.git
    cd agent-smart-contract
    ```
 
@@ -57,6 +57,7 @@ Ensure you have the following installed:
 
    ```env
    PK=your_private_key_here
+   ETH_NETWORK=network_name
    ```
 
 2. **Hardhat Configuration**
@@ -90,7 +91,7 @@ npx hardhat node
 Deploy the `Agent` contract using Hardhat Ignition:
 
 ```bash
-npx hardhat ignition deploy ./ignition/modules/Agent.ts
+npx hardhat deploy --tags Agent --network NETWORK_NAME
 ```
 
 ## Project Structure
